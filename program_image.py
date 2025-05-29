@@ -3,8 +3,9 @@ import requests
 from PIL import Image
 from io import BytesIO
 
-st.title("แสดงภาพจาก URL (3 รูป) พร้อมปรับขนาดแกน X และ Y")
+st.title("แสดงภาพจาก URL (3 รูป)")
 
+# CSS ปรับขนาดปุ่มให้เท่ากัน
 button_style = """
     <style>
     .stButton > button {
@@ -27,6 +28,7 @@ cols = st.columns(3)
 if 'selected_index' not in st.session_state:
     st.session_state.selected_index = None
 
+# แสดงภาพและปุ่มเลือกภาพ
 for i, url in enumerate(image_urls):
     response = requests.get(url)
     if response.status_code == 200:
@@ -38,22 +40,18 @@ for i, url in enumerate(image_urls):
     else:
         cols[i].error("โหลดภาพไม่สำเร็จ")
 
+# Slider สำหรับปรับขนาดภาพ
 st.markdown("---")
-st.write("**ลากปรับขนาดภาพตามแกน X และ Y (px):**")
+st.write("**ลากปรับขนาดภาพ (ความกว้าง px):**")
+img_width = st.slider("ขนาดภาพ", min_value=100, max_value=900, value=600, step=10)
 
-# ปรับความกว้าง (X)
-img_width = st.slider("ความกว้าง (แกน X)", min_value=100, max_value=900, value=600, step=10)
-# ปรับความสูง (Y)
-img_height = st.slider("ความสูง (แกน Y)", min_value=100, max_value=900, value=400, step=10)
-
+# แสดงภาพใหญ่ตามขนาดที่เลือก
 if st.session_state.selected_index is not None:
     st.markdown("---")
-    st.subheader("ภาพที่คุณเลือก (ขนาดปรับได้ตามแกน X และ Y):")
+    st.subheader("ภาพที่คุณเลือก:")
     response = requests.get(image_urls[st.session_state.selected_index])
     if response.status_code == 200:
         img = Image.open(BytesIO(response.content))
-        # ปรับขนาดภาพแบบไม่รักษาสัดส่วน (stretch)
-        img_resized = img.resize((img_width, img_height))
-        st.image(img_resized, caption=f"ภาพที่ {st.session_state.selected_index+1}", width=img_width)
+        st.image(img, caption=f"ภาพที่ {st.session_state.selected_index+1} (ขนาดปรับได้)", width=img_width)
     else:
         st.error("ไม่สามารถโหลดภาพที่เลือกได้")
