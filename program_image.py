@@ -23,3 +23,14 @@ for i, url in enumerate(image_urls):
         cols[i].image(img, caption=f'ภาพที่ {i+1}', use_container_width=True)  # ✅ ใช้ use_container_width
     else:
         cols[i].error("โหลดภาพไม่สำเร็จ")
+# แสดงภาพใหญ่ที่ถูกเลือก
+if "selected_index" in st.session_state:
+    st.markdown("---")
+    st.subheader("ภาพที่คุณเลือก:")
+    selected_url = image_urls[st.session_state.selected_index]
+    response = requests.get(selected_url)
+    if response.status_code == 200:
+        selected_img = Image.open(BytesIO(response.content))
+        st.image(selected_img, use_container_width=True)
+    else:
+        st.error("ไม่สามารถโหลดภาพที่เลือกได้")
