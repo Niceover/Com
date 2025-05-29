@@ -20,6 +20,6 @@ for i, url in enumerate(image_urls):
     response = requests.get(url)
     if response.status_code == 200:
         img = Image.open(BytesIO(response.content))
-        cols[i].image(img, caption=f'ภาพที่ {i+1}', use_column_width=True)
+        cols[i].image(img, caption=f'ภาพที่ {i+1}', use_container_width=True)  # ✅ ใช้ use_container_width
     else:
         cols[i].error("โหลดภาพไม่สำเร็จ")
