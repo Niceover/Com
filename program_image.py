@@ -4,7 +4,7 @@ from PIL import Image
 from io import BytesIO
 import matplotlib.pyplot as plt
 
-st.title("แสดงภาพพร้อมแกน X,Y ด้วย Matplotlib")
+st.title("แสดงภาพพร้อมแกน X,Y ด้วย Matplotlib และ Image Slice")
 
 image_urls = [
     "https://upload.wikimedia.org/wikipedia/commons/b/bf/Bulldog_inglese.jpg",
@@ -42,6 +42,7 @@ if st.session_state.selected_index is not None:
     response = requests.get(image_urls[st.session_state.selected_index])
     if response.status_code == 200:
         img = Image.open(BytesIO(response.content))
+
         # ปรับขนาดภาพตาม slider
         w_percent = st.session_state.img_width / img.width
         h_size = int(img.height * w_percent)
@@ -59,5 +60,32 @@ if st.session_state.selected_index is not None:
         ax.set_ylim(h_size, 0)  # กลับแกน y ให้ภาพไม่กลับหัว
 
         st.pyplot(fig)
+
+        # ----------- เริ่มส่วน Image Slice -----------
+        st.markdown("---")
+        st.subheader("Image Slice (ตัดภาพ)")
+
+        # กำหนดตำแหน่งและขนาด slice ในภาพ resized
+        col1, col2, col3, col4 = st.columns(4)
+        slice_x = col1.number_input("X (ซ้าย)", min_value=0, max_value=st.session_state.img_width - 1, value=0)
+        slice_y = col2.number_input("Y (บน)", min_value=0, max_value=h_size - 1, value=0)
+        slice_w = col3.number_input("ความกว้าง", min_value=1, max_value=st.session_state.img_width - slice_x, value=100)
+        slice_h = col4.number_input("ความสูง", min_value=1, max_value=h_size - slice_y, value=100)
+
+        # Crop ภาพตาม slice ที่กำหนด
+        box = (slice_x, slice_y, slice_x + slice_w, slice_y + slice_h)
+        img_slice = img_resized.crop(box)
+
+        # แสดงภาพ slice พร้อมแกน X,Y ด้วย matplotlib
+        fig2, ax2 = plt.subplots()
+        ax2.imshow(img_slice)
+        ax2.set_xlabel("แกน X (พิกเซล)")
+        ax2.set_ylabel("แกน Y (พิกเซล)")
+        ax2.set_title("ภาพ Slice (ตัดออกมา)")
+
+        ax2.set_xlim(0, slice_w)
+        ax2.set_ylim(slice_h, 0)  # กลับแกน y
+
+        st.pyplot(fig2)
     else:
         st.error("โหลดภาพไม่สำเร็จ")
