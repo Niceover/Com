@@ -8,8 +8,8 @@ st.title("แสดงภาพจาก URL (3 รูป)")
 # รายการ URL ของภาพ (แก้ไขใหม่)
 image_urls = [
     "https://upload.wikimedia.org/wikipedia/commons/b/bf/Bulldog_inglese.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/5/5f/Golden_Retriever_medium-to-light-coat.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/f/f0/Labrador_Retriever_portrait.jpg"
+    "https://thumb.ac-illust.com/29/29ce6de610daafcb4d063cd8fdbadbce_t.jpeg",
+    "https://s.isanook.com/ca/0/ud/276/1381733/9_cat-1333922_1920.jpg"
 ]
 
 # สร้าง layout แบบ 3 คอลัมน์
