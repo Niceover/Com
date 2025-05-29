@@ -5,7 +5,7 @@ import io
 import numpy as np
 from ultralytics import YOLO
 import time
-import cv2  # เพิ่มเพื่อจัดการภาพ
+import cv2
 
 # โหลดโมเดล YOLO
 @st.cache_resource
@@ -72,7 +72,7 @@ else:
 
 # แสดงภาพและตรวจจับวัตถุ
 if image is not None:
-    st.image(image, caption="ภาพที่โหลด", use_column_width=True)
+    st.image(image, caption="ภาพที่โหลด", use_container_width=True)  # เปลี่ยนเป็น use_container_width
     if st.button("ตรวจจับวัตถุ"):
         with st.spinner("กำลังตรวจจับวัตถุ..."):
             objects, detection_time, result_image = detect_objects(image)
@@ -81,7 +81,7 @@ if image is not None:
                 for obj in objects:
                     st.write(f"- {obj}")
                 st.info(f"เวลาที่ใช้ในการตรวจจับ: {detection_time:.2f} วินาที")
-                st.image(result_image, caption="ภาพพร้อมกรอบรอบวัตถุ", use_column_width=True)
+                st.image(result_image, caption="ภาพพร้อมกรอบรอบวัตถุ", use_container_width=True)  # เปลี่ยนเป็น use_container_width
             else:
                 st.warning("ไม่พบวัตถุในภาพหรือเกิดข้อผิดพลาด")
 else:
