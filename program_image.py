@@ -5,7 +5,7 @@ from io import BytesIO
 
 st.title("แสดงภาพจาก URL (3 รูป)")
 
-# CSS สำหรับกำหนดความกว้างของปุ่มให้เท่ากัน
+# CSS ปรับขนาดปุ่มให้เท่ากัน
 button_style = """
     <style>
     .stButton > button {
@@ -35,7 +35,8 @@ for i, url in enumerate(image_urls):
     response = requests.get(url)
     if response.status_code == 200:
         img = Image.open(BytesIO(response.content))
-        cols[i].image(img, caption=f'ภาพที่ {i+1}', use_container_width=True)
+        # แสดงภาพขนาดเล็ก (ความกว้าง 180px)
+        cols[i].image(img, caption=f'ภาพที่ {i+1}', width=180)
         with cols[i]:
             if st.button(f"เลือกภาพที่ {i+1}", key=f"btn{i}"):
                 selected_index = i
@@ -49,6 +50,7 @@ if selected_index is not None:
     response = requests.get(image_urls[selected_index])
     if response.status_code == 200:
         img = Image.open(BytesIO(response.content))
-        st.image(img, caption=f"ภาพที่ {selected_index+1} (ขนาดใหญ่)", use_container_width=True)
+        # แสดงภาพขนาดใหญ่ (ความกว้าง 600px)
+        st.image(img, caption=f"ภาพที่ {selected_index+1} (ขนาดใหญ่)", width=600)
     else:
         st.error("ไม่สามารถโหลดภาพที่เลือกได้")
