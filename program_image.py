@@ -93,3 +93,34 @@ if st.session_state.selected_index is not None:
 
     else:
         st.error("โหลดภาพไม่สำเร็จ")
+    # ... (โค้ดก่อนหน้านี้เหมือนเดิม จนถึง st.image(img_slice, ...))
+
+        # ----------- รวมภาพ 2 ภาพ และให้เลือกว่าให้ภาพไหนเด่น -----------
+
+        st.markdown("---")
+        st.subheader("รวมภาพ (Overlay)")
+
+        # แปลงภาพทั้งสองให้มี mode = "RGBA"
+        img_rgba = img_resized.convert("RGBA")
+        img_slice_rgba = img_slice.convert("RGBA")
+
+        # ขยายขนาดภาพ slice ให้เท่ากับภาพหลัก (โดยการใส่ transparency พื้นหลัง)
+        bg = Image.new("RGBA", img_rgba.size, (0, 0, 0, 0))
+        # นำ slice มาวางตรงตำแหน่งที่เลือกไว้
+        bg.paste(img_slice_rgba, (slice_x_start, slice_y_start))
+
+        # dropdown ให้เลือกว่า ภาพไหนจะเด่น (อยู่ด้านบน)
+        layer_choice = st.selectbox(
+            "เลือกภาพที่ต้องการให้เด่นกว่า (อยู่ด้านบน)",
+            ("ภาพหลัก", "ภาพ Slice")
+        )
+
+        # รวมภาพโดยให้ภาพที่เด่นอยู่ด้านบน
+        if layer_choice == "ภาพหลัก":
+            result_img = Image.alpha_composite(bg, img_rgba)
+        else:
+            result_img = Image.alpha_composite(img_rgba, bg)
+
+        # แสดงภาพที่รวมกันแล้ว
+        st.image(result_img, caption="ภาพที่รวมกันแล้ว", use_container_width=True)
+
