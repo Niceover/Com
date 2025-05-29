@@ -4,6 +4,7 @@ from PIL import Image
 import io
 import numpy as np
 from ultralytics import YOLO
+import time  # Added for timing the detection process
 
 # โหลดโมเดล YOLO
 @st.cache_resource
@@ -28,8 +29,13 @@ def detect_objects(image):
     try:
         # แปลงภาพเป็น numpy array
         img_array = np.array(image)
+        # เริ่มจับเวลา
+        start_time = time.time()
         # ทำการตรวจจับวัตถุ
         results = model(img_array)
+        # คำนวณเวลาที่ใช้
+        end_time = time.time()
+        detection_time = end_time - start_time
         # ดึงชื่อวัตถุที่ตรวจพบ
         objects = []
         for result in results:
@@ -37,10 +43,10 @@ def detect_objects(image):
                 class_id = int(box.cls)
                 label = model.names[class_id]
                 objects.append(label)
-        return list(set(objects))  # ลบวัตถุที่ซ้ำ
+        return list(set(objects)), detection_time  # คืนค่า objects และ detection_time
     except Exception as e:
         st.error(f"เกิดข้อผิดพลาดในการตรวจจับวัตถุ: {e}")
-        return []
+        return [], 0.0  # คืนค่า list ว่างและเวลา 0 หากเกิดข้อผิดพลาด
 
 # ส่วนติดต่อผู้ใช้
 st.title("โปรแกรมตรวจจับวัตถุในภาพ")
@@ -64,11 +70,12 @@ if image is not None:
     st.image(image, caption="ภาพที่โหลด", use_column_width=True)
     if st.button("ตรวจจับวัตถุ"):
         with st.spinner("กำลังตรวจจับวัตถุ..."):
-            objects = detect_objects(image)
+            objects, detection_time = detect_objects(image)  # รับทั้ง objects และ detection_time
             if objects:
                 st.success("ตรวจพบวัตถุต่อไปนี้:")
                 for obj in objects:
                     st.write(f"- {obj}")
+                st.info(f"เวลาที่ใช้ในการตรวจจับ: {detection_time:.2f} วินาที")  # แสดงเวลา
             else:
                 st.warning("ไม่พบวัตถุในภาพหรือเกิดข้อผิดพลาด")
 else:
