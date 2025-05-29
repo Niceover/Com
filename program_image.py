@@ -5,6 +5,18 @@ from io import BytesIO
 
 st.title("แสดงภาพจาก URL (3 รูป)")
 
+# CSS สำหรับกำหนดความกว้างของปุ่มให้เท่ากัน
+button_style = """
+    <style>
+    .stButton > button {
+        width: 100%;
+        height: 40px;
+        font-size: 16px;
+    }
+    </style>
+"""
+st.markdown(button_style, unsafe_allow_html=True)
+
 # รายการ URL ของภาพ
 image_urls = [
     "https://upload.wikimedia.org/wikipedia/commons/b/bf/Bulldog_inglese.jpg",
@@ -12,24 +24,25 @@ image_urls = [
     "https://s.isanook.com/ca/0/ud/276/1381733/9_cat-1333922_1920.jpg"
 ]
 
-# สร้างคอลัมน์
+# สร้าง layout แบบ 3 คอลัมน์
 cols = st.columns(3)
 
-# ตัวแปรเก็บ index ของภาพที่เลือก
+# ตัวแปรเก็บ index ภาพที่เลือก
 selected_index = None
 
-# แสดงภาพและปุ่มเลือกในแต่ละคอลัมน์
+# แสดงภาพและปุ่มในแต่ละคอลัมน์
 for i, url in enumerate(image_urls):
     response = requests.get(url)
     if response.status_code == 200:
         img = Image.open(BytesIO(response.content))
         cols[i].image(img, caption=f'ภาพที่ {i+1}', use_container_width=True)
-        if cols[i].button(f"เลือกภาพที่ {i+1}"):
-            selected_index = i
+        with cols[i]:
+            if st.button(f"เลือกภาพที่ {i+1}", key=f"btn{i}"):
+                selected_index = i
     else:
         cols[i].error("โหลดภาพไม่สำเร็จ")
 
-# แสดงภาพใหญ่ที่เลือกด้านล่าง
+# แสดงภาพใหญ่ด้านล่างหากมีการเลือก
 if selected_index is not None:
     st.markdown("---")
     st.subheader("ภาพที่คุณเลือก:")
