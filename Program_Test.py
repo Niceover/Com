@@ -4,7 +4,8 @@ from PIL import Image
 import io
 import numpy as np
 from ultralytics import YOLO
-import time  # Added for timing the detection process
+import time
+import cv2  # เพิ่มเพื่อจัดการภาพ
 
 # โหลดโมเดล YOLO
 @st.cache_resource
@@ -43,10 +44,14 @@ def detect_objects(image):
                 class_id = int(box.cls)
                 label = model.names[class_id]
                 objects.append(label)
-        return list(set(objects)), detection_time  # คืนค่า objects และ detection_time
+        # สร้างภาพที่มีกรอบรอบวัตถุ
+        result_image = results[0].plot()  # ใช้ plot() เพื่อวาดกรอบและชื่อ
+        # แปลงภาพผลลัพธ์เป็น PIL Image เพื่อแสดงใน Streamlit
+        result_image_pil = Image.fromarray(result_image[..., ::-1])  # แปลง BGR เป็น RGB
+        return list(set(objects)), detection_time, result_image_pil
     except Exception as e:
         st.error(f"เกิดข้อผิดพลาดในการตรวจจับวัตถุ: {e}")
-        return [], 0.0  # คืนค่า list ว่างและเวลา 0 หากเกิดข้อผิดพลาด
+        return [], 0.0, None
 
 # ส่วนติดต่อผู้ใช้
 st.title("โปรแกรมตรวจจับวัตถุในภาพ")
@@ -70,12 +75,13 @@ if image is not None:
     st.image(image, caption="ภาพที่โหลด", use_column_width=True)
     if st.button("ตรวจจับวัตถุ"):
         with st.spinner("กำลังตรวจจับวัตถุ..."):
-            objects, detection_time = detect_objects(image)  # รับทั้ง objects และ detection_time
-            if objects:
+            objects, detection_time, result_image = detect_objects(image)
+            if objects and result_image is not None:
                 st.success("ตรวจพบวัตถุต่อไปนี้:")
                 for obj in objects:
                     st.write(f"- {obj}")
-                st.info(f"เวลาที่ใช้ในการตรวจจับ: {detection_time:.2f} วินาที")  # แสดงเวลา
+                st.info(f"เวลาที่ใช้ในการตรวจจับ: {detection_time:.2f} วินาที")
+                st.image(result_image, caption="ภาพพร้อมกรอบรอบวัตถุ", use_column_width=True)
             else:
                 st.warning("ไม่พบวัตถุในภาพหรือเกิดข้อผิดพลาด")
 else:
