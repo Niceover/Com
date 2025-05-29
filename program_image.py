@@ -20,6 +20,7 @@ if 'selected_index' not in st.session_state:
 if 'img_width' not in st.session_state:
     st.session_state.img_width = 600
 
+# แสดงภาพตัวอย่างเล็ก 3 รูป พร้อมปุ่มเลือก
 for i, url in enumerate(image_urls):
     response = requests.get(url)
     if response.status_code == 200:
@@ -42,7 +43,6 @@ if st.session_state.selected_index is not None:
     response = requests.get(image_urls[st.session_state.selected_index])
     if response.status_code == 200:
         img = Image.open(BytesIO(response.content))
-
         # ปรับขนาดภาพตาม slider
         w_percent = st.session_state.img_width / img.width
         h_size = int(img.height * w_percent)
@@ -65,27 +65,36 @@ if st.session_state.selected_index is not None:
         st.markdown("---")
         st.subheader("Image Slice (ตัดภาพ)")
 
-        # กำหนดตำแหน่งและขนาด slice ในภาพ resized
-        col1, col2, col3, col4 = st.columns(4)
-        slice_x = col1.number_input("X (ซ้าย)", min_value=0, max_value=st.session_state.img_width - 1, value=0)
-        slice_y = col2.number_input("Y (บน)", min_value=0, max_value=h_size - 1, value=0)
-        slice_w = col3.number_input("ความกว้าง", min_value=1, max_value=st.session_state.img_width - slice_x, value=100)
-        slice_h = col4.number_input("ความสูง", min_value=1, max_value=h_size - slice_y, value=100)
+        # กำหนดตำแหน่ง slice แบบตายตัว (x: 200-300, y: 300-500)
+        slice_x_start = 200
+        slice_x_end = 300
+        slice_y_start = 300
+        slice_y_end = 500
 
-        # Crop ภาพตาม slice ที่กำหนด
-        box = (slice_x, slice_y, slice_x + slice_w, slice_y + slice_h)
+        # ป้องกันขอบเขตเกินภาพ resized
+        slice_x_start = max(0, min(slice_x_start, st.session_state.img_width))
+        slice_x_end = max(slice_x_start + 1, min(slice_x_end, st.session_state.img_width))
+        slice_y_start = max(0, min(slice_y_start, h_size))
+        slice_y_end = max(slice_y_start + 1, min(slice_y_end, h_size))
+
+        box = (slice_x_start, slice_y_start, slice_x_end, slice_y_end)
         img_slice = img_resized.crop(box)
 
-        # แสดงภาพ slice พร้อมแกน X,Y ด้วย matplotlib
+        slice_w = slice_x_end - slice_x_start
+        slice_h = slice_y_end - slice_y_start
+
+        # แสดงภาพ slice ด้วย matplotlib (พร้อมแกน X,Y)
         fig2, ax2 = plt.subplots()
         ax2.imshow(img_slice)
         ax2.set_xlabel("แกน X (พิกเซล)")
         ax2.set_ylabel("แกน Y (พิกเซล)")
         ax2.set_title("ภาพ Slice (ตัดออกมา)")
-
         ax2.set_xlim(0, slice_w)
         ax2.set_ylim(slice_h, 0)  # กลับแกน y
-
         st.pyplot(fig2)
+
+        # แสดงภาพ Slice ด้วย st.image()
+        st.image(img_slice, caption="ภาพ Slice (แสดงด้วย st.image())", use_column_width=False)
+
     else:
         st.error("โหลดภาพไม่สำเร็จ")
