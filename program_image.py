@@ -17,24 +17,30 @@ button_style = """
 """
 st.markdown(button_style, unsafe_allow_html=True)
 
+# รายการ URL ของภาพ
 image_urls = [
     "https://upload.wikimedia.org/wikipedia/commons/b/bf/Bulldog_inglese.jpg",
     "https://thumb.ac-illust.com/29/29ce6de610daafcb4d063cd8fdbadbce_t.jpeg",
     "https://s.isanook.com/ca/0/ud/276/1381733/9_cat-1333922_1920.jpg"
 ]
 
+# สร้าง layout แบบ 3 คอลัมน์
 cols = st.columns(3)
 
+# ตัวแปรเก็บ index ภาพที่เลือก
 if 'selected_index' not in st.session_state:
     st.session_state.selected_index = None
 
+# ตัวแปรเก็บขนาดภาพ (ความกว้างเป็นพิกเซล)
 if 'img_width' not in st.session_state:
-    st.session_state.img_width = 600
+    st.session_state.img_width = 600  # default ขนาดกลาง
 
+# แสดงภาพและปุ่มในแต่ละคอลัมน์
 for i, url in enumerate(image_urls):
     response = requests.get(url)
     if response.status_code == 200:
         img = Image.open(BytesIO(response.content))
+        # แสดงภาพขนาดเล็ก (ความกว้าง 180px)
         cols[i].image(img, caption=f'ภาพที่ {i+1}', width=180)
         with cols[i]:
             if st.button(f"เลือกภาพที่ {i+1}", key=f"btn{i}"):
@@ -42,6 +48,7 @@ for i, url in enumerate(image_urls):
     else:
         cols[i].error("โหลดภาพไม่สำเร็จ")
 
+# ปุ่มเลือกขนาดภาพ (เล็ก, กลาง, ใหญ่)
 st.markdown("---")
 st.write("**เลือกขนาดภาพที่แสดง:**")
 size = st.radio("", options=["เล็ก (300 px)", "กลาง (600 px)", "ใหญ่ (900 px)"])
@@ -53,6 +60,7 @@ elif size == "กลาง (600 px)":
 else:
     st.session_state.img_width = 900
 
+# แสดงภาพใหญ่ด้านล่างหากมีการเลือก
 if st.session_state.selected_index is not None:
     st.markdown("---")
     st.subheader("ภาพที่คุณเลือก:")
@@ -61,14 +69,5 @@ if st.session_state.selected_index is not None:
         img = Image.open(BytesIO(response.content))
         # แสดงภาพตามขนาดที่เลือก
         st.image(img, caption=f"ภาพที่ {st.session_state.selected_index+1} (ขนาดปรับได้)", width=st.session_state.img_width)
-
-        # แสดงขนาดภาพ (original size)
-        orig_width, orig_height = img.size
-        st.write(f"**ขนาดภาพต้นฉบับ:** กว้าง {orig_width}px x สูง {orig_height}px")
-        
-        # คำนวณความสูงตามอัตราส่วนเมื่อย่อความกว้าง
-        scale_ratio = st.session_state.img_width / orig_width
-        scaled_height = int(orig_height * scale_ratio)
-        st.write(f"**ขนาดภาพที่แสดง:** กว้าง {st.session_state.img_width}px x สูง {scaled_height}px")
     else:
-        st.error("ไม่สามารถโหลดภาพที่เลือกได้")
+        st.error("ไม่สามารถโหลดภาพที่เลือกได้")  # ทำปุ่มปรับขนาดภาพให้ที่ ทำเล็กใหญ่กลางอะรไแบบนั้น
