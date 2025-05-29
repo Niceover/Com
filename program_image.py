@@ -5,10 +5,10 @@ from io import BytesIO
 
 st.title("แสดงภาพจาก URL (3 รูป)")
 
-# รายการ URL ของภาพ
+# รายการ URL ของภาพ (แก้ไขใหม่)
 image_urls = [
     "https://upload.wikimedia.org/wikipedia/commons/b/bf/Bulldog_inglese.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/6/6e/Golde33443.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/5/5f/Golden_Retriever_medium-to-light-coat.jpg",
     "https://upload.wikimedia.org/wikipedia/commons/f/f0/Labrador_Retriever_portrait.jpg"
 ]
 
