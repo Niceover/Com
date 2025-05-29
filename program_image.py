@@ -35,7 +35,6 @@ for i, url in enumerate(image_urls):
     response = requests.get(url)
     if response.status_code == 200:
         img = Image.open(BytesIO(response.content))
-        # แสดงภาพขนาดเล็ก (ความกว้าง 180px)
         cols[i].image(img, caption=f'ภาพที่ {i+1}', width=180)
         with cols[i]:
             if st.button(f"เลือกภาพที่ {i+1}", key=f"btn{i}"):
@@ -43,14 +42,30 @@ for i, url in enumerate(image_urls):
     else:
         cols[i].error("โหลดภาพไม่สำเร็จ")
 
-# แสดงภาพใหญ่ด้านล่างหากมีการเลือก
+# แสดงตัวเลือกขนาดภาพ
 if selected_index is not None:
     st.markdown("---")
     st.subheader("ภาพที่คุณเลือก:")
+
+    # ปุ่มให้เลือกขนาด
+    size_option = st.radio(
+        "เลือกขนาดภาพที่ต้องการแสดง:",
+        ("เล็ก", "กลาง", "ใหญ่"),
+        horizontal=True
+    )
+
+    # กำหนดความกว้างตามขนาดที่เลือก
+    if size_option == "เล็ก":
+        width = 300
+    elif size_option == "กลาง":
+        width = 500
+    else:  # ใหญ่
+        width = 700
+
+    # โหลดและแสดงภาพที่เลือก
     response = requests.get(image_urls[selected_index])
     if response.status_code == 200:
         img = Image.open(BytesIO(response.content))
-        # แสดงภาพขนาดใหญ่ (ความกว้าง 600px)
-        st.image(img, caption=f"ภาพที่ {selected_index+1} (ขนาดใหญ่)", width=600)
+        st.image(img, caption=f"ภาพที่ {selected_index+1} ({size_option})", width=width)
     else:
         st.error("ไม่สามารถโหลดภาพที่เลือกได้")
