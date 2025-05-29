@@ -3,19 +3,23 @@ import requests
 from PIL import Image
 from io import BytesIO
 
-# หัวข้อแอป
-st.title("แสดงภาพจาก URL")
+st.title("แสดงภาพจาก URL (3 รูป)")
 
-# URL ของภาพ
-url = "https://upload.wikimedia.org/wikipedia/commons/b/bf/Bulldog_inglese.jpg"
+# รายการ URL ของภาพ
+image_urls = [
+    "https://upload.wikimedia.org/wikipedia/commons/b/bf/Bulldog_inglese.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/6/6e/Golde33443.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/f/f0/Labrador_Retriever_portrait.jpg"
+]
 
-# ดาวน์โหลดภาพจาก URL
-response = requests.get(url)
+# สร้าง layout แบบ 3 คอลัมน์
+cols = st.columns(3)
 
-if response.status_code == 200:
-    # แปลงเป็น Image object
-    img = Image.open(BytesIO(response.content))
-    st.image(img, caption='Bulldog Inglese', use_column_width=True)
-else:
-    st.error("ไม่สามารถโหลดภาพได้")
-
+# แสดงภาพในแต่ละคอลัมน์
+for i, url in enumerate(image_urls):
+    response = requests.get(url)
+    if response.status_code == 200:
+        img = Image.open(BytesIO(response.content))
+        cols[i].image(img, caption=f'ภาพที่ {i+1}', use_column_width=True)
+    else:
+        cols[i].error("โหลดภาพไม่สำเร็จ")
