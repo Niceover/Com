@@ -3,7 +3,7 @@ import requests
 from PIL import Image
 from io import BytesIO
 
-st.title("แสดงภาพจาก URL (3 รูป)")
+st.title("แสดงภาพจาก")
 
 # รายการ URL ของภาพ (แก้ไขใหม่)
 image_urls = [
