@@ -54,3 +54,22 @@ if st.session_state.selected_index is not None:
         st.image(img, caption=f"ภาพที่ {st.session_state.selected_index+1} (ขนาดปรับได้)", width=st.session_state.img_width)
     else:
         st.error("ไม่สามารถโหลดภาพที่เลือกได้")
+if st.session_state.selected_index is not None:
+    st.markdown("---")
+    st.subheader("ภาพที่คุณเลือก:")
+    response = requests.get(image_urls[st.session_state.selected_index])
+    if response.status_code == 200:
+        img = Image.open(BytesIO(response.content))
+        
+        # วาดแกน X,Y บนภาพ
+        img_with_axes = draw_axes(img.copy())
+        
+        # ปรับขนาดภาพตาม slider (ปรับความกว้าง)
+        w_percent = st.session_state.img_width / img_with_axes.width
+        h_size = int(img_with_axes.height * w_percent)
+        img_resized = img_with_axes.resize((st.session_state.img_width, h_size))
+
+        # แสดงภาพพร้อมแกน
+        st.image(img_resized, caption=f"ภาพที่ {st.session_state.selected_index+1} พร้อมแกน X,Y", width=st.session_state.img_width)
+    else:
+        st.error("ไม่สามารถโหลดภาพที่เลือกได้")
