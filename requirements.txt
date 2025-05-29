@@ -4,3 +4,4 @@ scikit-image>=0.19.3
 matplotlib
 pillow
 requests
+ultralytics
