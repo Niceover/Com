@@ -3,8 +3,19 @@ import requests
 from PIL import Image
 from io import BytesIO
 import matplotlib.pyplot as plt
+import numpy as np
+from ultralytics import YOLO
 
-st.title("แสดงภาพพร้อมแกน X,Y ด้วย Matplotlib และ Image Slice (ลากตำแหน่ง Slice ได้)")
+# โหลดโมเดล YOLO เพียงครั้งเดียว
+@st.cache_resource
+def load_model():
+    return YOLO("yolov8n.pt")  # ใช้ YOLOv8 nano
+
+model = load_model()
+
+# ------------------- ส่วนแสดงภาพ -------------------
+
+st.title("แสดงภาพ + ตัด Slice + รวมภาพ + ตรวจจับวัตถุด้วย YOLOv8")
 
 image_urls = [
     "https://upload.wikimedia.org/wikipedia/commons/b/bf/Bulldog_inglese.jpg",
@@ -20,11 +31,14 @@ if 'selected_index' not in st.session_state:
 if 'img_width' not in st.session_state:
     st.session_state.img_width = 600
 
-# แสดงภาพตัวอย่างเล็ก 3 รูป พร้อมปุ่มเลือก
+images = []  # เก็บภาพโหลดแล้ว
+
+# โหลดภาพและแสดงตัวเลือก
 for i, url in enumerate(image_urls):
     response = requests.get(url)
     if response.status_code == 200:
         img = Image.open(BytesIO(response.content))
+        images.append(img)
         cols[i].image(img, caption=f'ภาพที่ {i+1}', width=180)
         with cols[i]:
             if st.button(f"เลือกภาพที่ {i+1}", key=f"btn{i}"):
@@ -37,90 +51,72 @@ width_slider = st.slider("ปรับขนาดภาพ (ความกว�
 st.session_state.img_width = width_slider
 
 if st.session_state.selected_index is not None:
+    st.subheader("ภาพที่คุณเลือก")
+    selected_img = images[st.session_state.selected_index]
+    w_percent = st.session_state.img_width / selected_img.width
+    h_size = int(selected_img.height * w_percent)
+    img_resized = selected_img.resize((st.session_state.img_width, h_size))
+
+    st.image(img_resized, caption="ภาพที่เลือก", use_column_width=False)
+
     st.markdown("---")
-    st.subheader("ภาพที่คุณเลือกพร้อมแกน X, Y")
+    st.subheader("ตัดภาพ (Image Slice)")
 
-    response = requests.get(image_urls[st.session_state.selected_index])
-    if response.status_code == 200:
-        img = Image.open(BytesIO(response.content))
-        # ปรับขนาดภาพตาม slider
-        w_percent = st.session_state.img_width / img.width
-        h_size = int(img.height * w_percent)
-        img_resized = img.resize((st.session_state.img_width, h_size))
+    slice_x_start = st.slider("เริ่มต้นตำแหน่ง X", 0, st.session_state.img_width - 1, 200)
+    slice_x_end = st.slider("สิ้นสุดตำแหน่ง X", slice_x_start + 1, st.session_state.img_width, 300)
+    slice_y_start = st.slider("เริ่มต้นตำแหน่ง Y", 0, h_size - 1, 300)
+    slice_y_end = st.slider("สิ้นสุดตำแหน่ง Y", slice_y_start + 1, h_size, 500)
 
-        # วาดภาพด้วย matplotlib พร้อมแกน
-        fig, ax = plt.subplots()
-        ax.imshow(img_resized)
-        ax.set_xlabel("แกน X (พิกเซล)")
-        ax.set_ylabel("แกน Y (พิกเซล)")
-        ax.set_title(f"ภาพที่ {st.session_state.selected_index + 1}")
+    box = (slice_x_start, slice_y_start, slice_x_end, slice_y_end)
+    img_slice = img_resized.crop(box)
 
-        # ตั้งค่าช่วงแกนให้ตรงกับขนาดภาพ
-        ax.set_xlim(0, st.session_state.img_width)
-        ax.set_ylim(h_size, 0)  # กลับแกน y ให้ภาพไม่กลับหัว
+    st.image(img_slice, caption="ภาพ Slice", use_column_width=False)
 
-        st.pyplot(fig)
+    st.markdown("---")
+    st.subheader("รวมภาพ 2 ภาพ")
 
-        # ----------- เริ่มส่วน Image Slice (ลากตำแหน่ง slice ได้) -----------
-        st.markdown("---")
-        st.subheader("Image Slice (ตัดภาพ)")
+    # เลือกอีกภาพจาก dropdown
+    other_index = st.selectbox("เลือกภาพที่ต้องการรวมด้วย", [i for i in range(len(images)) if i != st.session_state.selected_index], format_func=lambda i: f"ภาพที่ {i+1}")
+    combine_mode = st.radio("เลือกภาพที่อยู่ด้านหน้า", ("ภาพหลักอยู่หน้า", "อีกภาพอยู่หน้า"))
 
-        # slider สำหรับตำแหน่ง slice ของแกน X และ Y
-        slice_x_start = st.slider("เริ่มต้นตำแหน่ง X", 0, st.session_state.img_width - 1, 200)
-        slice_x_end = st.slider("สิ้นสุดตำแหน่ง X", slice_x_start + 1, st.session_state.img_width, 300)
-        slice_y_start = st.slider("เริ่มต้นตำแหน่ง Y", 0, h_size - 1, 300)
-        slice_y_end = st.slider("สิ้นสุดตำแหน่ง Y", slice_y_start + 1, h_size, 500)
+    other_img = images[other_index].resize((st.session_state.img_width, h_size))
 
-        # Crop ภาพตามตำแหน่ง slice ที่เลือก
-        box = (slice_x_start, slice_y_start, slice_x_end, slice_y_end)
-        img_slice = img_resized.crop(box)
-
-        slice_w = slice_x_end - slice_x_start
-        slice_h = slice_y_end - slice_y_start
-
-        # แสดงภาพ slice ด้วย matplotlib (พร้อมแกน X,Y)
-        fig2, ax2 = plt.subplots()
-        ax2.imshow(img_slice)
-        ax2.set_xlabel("แกน X (พิกเซล)")
-        ax2.set_ylabel("แกน Y (พิกเซล)")
-        ax2.set_title("ภาพ Slice (ตัดออกมา)")
-        ax2.set_xlim(0, slice_w)
-        ax2.set_ylim(slice_h, 0)  # กลับแกน y
-        st.pyplot(fig2)
-
-        # แสดงภาพ Slice ด้วย st.image()
-        st.image(img_slice, caption="ภาพ Slice (แสดงด้วย st.image())", use_container_width=False)
-
+    # รวมภาพโดยแสดงผลภาพเด่นตามที่เลือก
+    if combine_mode == "ภาพหลักอยู่หน้า":
+        result_img = Image.blend(other_img, img_resized, alpha=0.4)
     else:
-        st.error("โหลดภาพไม่สำเร็จ")
-    # ... (โค้ดก่อนหน้านี้เหมือนเดิม จนถึง st.image(img_slice, ...))
+        result_img = Image.blend(img_resized, other_img, alpha=0.4)
 
-        # ----------- รวมภาพ 2 ภาพ และให้เลือกว่าให้ภาพไหนเด่น -----------
+    st.image(result_img, caption="ภาพที่รวมกันแล้ว", use_column_width=True)
 
-        st.markdown("---")
-        st.subheader("รวมภาพ (Overlay)")
+    # ---------------- ตรวจจับวัตถุด้วย YOLOv8 ----------------
+    st.markdown("---")
+    st.subheader("ตรวจจับวัตถุในภาพที่รวมแล้ว")
 
-        # แปลงภาพทั้งสองให้มี mode = "RGBA"
-        img_rgba = img_resized.convert("RGBA")
-        img_slice_rgba = img_slice.convert("RGBA")
+    def detect_objects(image):
+        try:
+            img_array = np.array(image)
+            results = model(img_array)
+            objects = []
+            for result in results:
+                for box in result.boxes:
+                    class_id = int(box.cls)
+                    label = model.names[class_id]
+                    objects.append(label)
+            return list(set(objects))  # ลบซ้ำ
+        except Exception as e:
+            st.error(f"เกิดข้อผิดพลาดในการตรวจจับวัตถุ: {e}")
+            return []
 
-        # ขยายขนาดภาพ slice ให้เท่ากับภาพหลัก (โดยการใส่ transparency พื้นหลัง)
-        bg = Image.new("RGBA", img_rgba.size, (0, 0, 0, 0))
-        # นำ slice มาวางตรงตำแหน่งที่เลือกไว้
-        bg.paste(img_slice_rgba, (slice_x_start, slice_y_start))
+    if st.button("ตรวจจับวัตถุจากภาพที่รวมแล้ว"):
+        with st.spinner("กำลังตรวจจับวัตถุ..."):
+            detected_objects = detect_objects(result_img)
+            if detected_objects:
+                st.success("ตรวจพบวัตถุต่อไปนี้:")
+                for obj in detected_objects:
+                    st.write(f"- {obj}")
+            else:
+                st.warning("ไม่พบวัตถุในภาพ")
 
-        # dropdown ให้เลือกว่า ภาพไหนจะเด่น (อยู่ด้านบน)
-        layer_choice = st.selectbox(
-            "เลือกภาพที่ต้องการให้เด่นกว่า (อยู่ด้านบน)",
-            ("ภาพหลัก", "ภาพ Slice")
-        )
-
-        # รวมภาพโดยให้ภาพที่เด่นอยู่ด้านบน
-        if layer_choice == "ภาพหลัก":
-            result_img = Image.alpha_composite(bg, img_rgba)
-        else:
-            result_img = Image.alpha_composite(img_rgba, bg)
-
-        # แสดงภาพที่รวมกันแล้ว
-        st.image(result_img, caption="ภาพที่รวมกันแล้ว", use_container_width=True)
-
+else:
+    st.info("กรุณาเลือกภาพด้านบนก่อน")
