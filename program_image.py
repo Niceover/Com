@@ -4,7 +4,7 @@ from PIL import Image
 from io import BytesIO
 import matplotlib.pyplot as plt
 
-st.title("แสดงภาพพร้อมแกน X,Y ด้วย Matplotlib และ Image Slice")
+st.title("แสดงภาพพร้อมแกน X,Y ด้วย Matplotlib และ Image Slice (ลากตำแหน่ง Slice ได้)")
 
 image_urls = [
     "https://upload.wikimedia.org/wikipedia/commons/b/bf/Bulldog_inglese.jpg",
@@ -61,22 +61,17 @@ if st.session_state.selected_index is not None:
 
         st.pyplot(fig)
 
-        # ----------- เริ่มส่วน Image Slice -----------
+        # ----------- เริ่มส่วน Image Slice (ลากตำแหน่ง slice ได้) -----------
         st.markdown("---")
         st.subheader("Image Slice (ตัดภาพ)")
 
-        # กำหนดตำแหน่ง slice แบบตายตัว (x: 200-300, y: 300-500)
-        slice_x_start = 200
-        slice_x_end = 300
-        slice_y_start = 300
-        slice_y_end = 500
+        # slider สำหรับตำแหน่ง slice ของแกน X และ Y
+        slice_x_start = st.slider("เริ่มต้นตำแหน่ง X", 0, st.session_state.img_width - 1, 200)
+        slice_x_end = st.slider("สิ้นสุดตำแหน่ง X", slice_x_start + 1, st.session_state.img_width, 300)
+        slice_y_start = st.slider("เริ่มต้นตำแหน่ง Y", 0, h_size - 1, 300)
+        slice_y_end = st.slider("สิ้นสุดตำแหน่ง Y", slice_y_start + 1, h_size, 500)
 
-        # ป้องกันขอบเขตเกินภาพ resized
-        slice_x_start = max(0, min(slice_x_start, st.session_state.img_width))
-        slice_x_end = max(slice_x_start + 1, min(slice_x_end, st.session_state.img_width))
-        slice_y_start = max(0, min(slice_y_start, h_size))
-        slice_y_end = max(slice_y_start + 1, min(slice_y_end, h_size))
-
+        # Crop ภาพตามตำแหน่ง slice ที่เลือก
         box = (slice_x_start, slice_y_start, slice_x_end, slice_y_end)
         img_slice = img_resized.crop(box)
 
@@ -94,7 +89,7 @@ if st.session_state.selected_index is not None:
         st.pyplot(fig2)
 
         # แสดงภาพ Slice ด้วย st.image()
-        st.image(img_slice, caption="ภาพ Slice (แสดงด้วย st.image())", use_column_width=False)
+        st.image(img_slice, caption="ภาพ Slice (แสดงด้วย st.image())", use_container_width=False)
 
     else:
         st.error("โหลดภาพไม่สำเร็จ")
