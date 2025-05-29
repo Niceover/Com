@@ -2,8 +2,9 @@ import streamlit as st
 import requests
 from PIL import Image
 from io import BytesIO
+import matplotlib.pyplot as plt
 
-st.title("แสดงภาพจาก URL (3 รูป) พร้อมแกน X,Y นอกภาพ")
+st.title("แสดงภาพพร้อมแกน X,Y ด้วย Matplotlib")
 
 image_urls = [
     "https://upload.wikimedia.org/wikipedia/commons/b/bf/Bulldog_inglese.jpg",
@@ -31,29 +32,32 @@ for i, url in enumerate(image_urls):
         cols[i].error("โหลดภาพไม่สำเร็จ")
 
 st.markdown("---")
-st.write("**ลากเลือกขนาดความกว้างภาพ (พิกเซล):**")
-width_slider = st.slider("ความกว้างภาพ", min_value=100, max_value=1000, value=st.session_state.img_width, step=10)
+width_slider = st.slider("ปรับขนาดภาพ (ความกว้าง px)", 100, 900, st.session_state.img_width)
 st.session_state.img_width = width_slider
 
 if st.session_state.selected_index is not None:
     st.markdown("---")
-    st.subheader("ภาพที่คุณเลือก:")
+    st.subheader("ภาพที่คุณเลือกพร้อมแกน X, Y")
+
     response = requests.get(image_urls[st.session_state.selected_index])
     if response.status_code == 200:
         img = Image.open(BytesIO(response.content))
+        # ปรับขนาดภาพตาม slider
         w_percent = st.session_state.img_width / img.width
         h_size = int(img.height * w_percent)
         img_resized = img.resize((st.session_state.img_width, h_size))
-        st.image(img_resized, caption=f"ภาพที่ {st.session_state.selected_index+1}", width=st.session_state.img_width)
 
-        # แสดงแกน X และ Y นอกภาพ (เป็นข้อความ)
-        st.markdown("**แกน X (พิกเซล):**")
-        x_ticks = list(range(0, img.width + 1, 100))
-        st.write(x_ticks)
+        # วาดภาพด้วย matplotlib พร้อมแกน
+        fig, ax = plt.subplots()
+        ax.imshow(img_resized)
+        ax.set_xlabel("แกน X (พิกเซล)")
+        ax.set_ylabel("แกน Y (พิกเซล)")
+        ax.set_title(f"ภาพที่ {st.session_state.selected_index + 1}")
 
-        st.markdown("**แกน Y (พิกเซล):**")
-        y_ticks = list(range(0, img.height + 1, 100))
-        st.write(y_ticks)
+        # ตั้งค่าช่วงแกนให้ตรงกับขนาดภาพ
+        ax.set_xlim(0, st.session_state.img_width)
+        ax.set_ylim(h_size, 0)  # กลับแกน y ให้ภาพไม่กลับหัว
 
+        st.pyplot(fig)
     else:
-        st.error("ไม่สามารถโหลดภาพที่เลือกได้")
+        st.error("โหลดภาพไม่สำเร็จ")
